@@ -22,7 +22,7 @@ Motor_IBT::Motor_IBT(int Pin_RPWM, int Pin_LPWM, int SensorPin, Stream &serial):
 {
   pinMode(_RPWM, OUTPUT);
   pinMode(_LPWM, OUTPUT);
-  TCCR0B = TCCR0B & B11111000 | B00000101; // reduce PWM frequency
+//  TCCR0B = TCCR0B & B11111000 | B00000101; // reduce PWM frequency
   
   _filteredADC = analogRead(_SensorPin);
   _angleTolerance = 2;
@@ -89,10 +89,10 @@ void Motor_IBT::FilterMedADC()
     ir_val[i] = analogRead(_SensorPin);
   }
 
-  int size = MED_COEFF;
-  for (int i = 0; i < (size - 1); i++) {
+  int len = MED_COEFF;
+  for (int i = 0; i < (len - 1); i++) {
     bool flag = true;
-    for (int o = 0; o < (size - (i + 1)); o++) {
+    for (int o = 0; o < (len - (i + 1)); o++) {
       if (ir_val[o] > ir_val[o + 1]) {
         int t = ir_val[o];
         ir_val[o] = ir_val[o + 1];
@@ -102,7 +102,7 @@ void Motor_IBT::FilterMedADC()
     }
     if (flag) break;
   }
-  _filteredADC = ir_val[size / 2];
+  _filteredADC = ir_val[len / 2];
   _angle = map(_filteredADC, 0, 1023, 0, 300);
 }
 

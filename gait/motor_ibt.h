@@ -28,7 +28,7 @@
 
 #include <Arduino.h>
 
-#define MA_COEFF 100  //Moving average coefficient
+#define MA_COEFF 100 //Moving average coefficient
 #define MED_COEFF 100 //Median filter coefficient
 
 enum rotateState {CW, CCW, STOP}; // 0 1 2
