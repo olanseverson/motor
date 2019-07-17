@@ -39,33 +39,6 @@ Motor_IBT::Motor_IBT(int Pin_RPWM, int Pin_LPWM, int SensorPin, Stream &serial):
 
 void Motor_IBT::Driver(rotateState IsRotate, bool isHip, int Speed)
 {
-  //  switch (IsRotate)  {
-  //    case CCW :
-  //      Serial.println('a');
-  //      int turun = Speed; // naik ke belakang
-  //      if (isHip && _angle >= 0) {
-  //        turun = 45 - _angle / 2; // jatuh
-  //      }
-  //      analogWrite(_LPWM, 0);
-  //      analogWrite(_RPWM, turun);
-  //      break;
-  //    case CW :
-  //      Serial.println('b');
-  //      int gerak = Speed; // naik ke depan
-  //      if (isHip && _angle >= 0) {
-  //        gerak = 35 - _angle / 2; // jatuh
-  //      }
-  //      analogWrite(_LPWM, gerak);
-  //      analogWrite(_RPWM, 0);
-  //      break;
-  //    case STOP :
-  //      Serial.println('c');
-  //      analogWrite(_LPWM, 255);
-  //      analogWrite(_RPWM, 255);
-  //      break;
-  //    default:
-  //      Serial.println("knp kesini");
-  //  }
   if (IsRotate == CCW) {
     //    Serial.println('a');
     int turun = Speed; // naik ke belakang
@@ -142,7 +115,7 @@ void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackw
   _PID_i = _PID_i + delta;
   _PID_d = delta - _prev_error;
   _prev_error = delta;
-  _PID_value = (delta * 0.6 + _PID_i * 0.05 + _PID_d * 0.1) * abs(sin((_angle / 180) * 3.14));
+  _PID_value = (delta * 0.8 + _PID_i * 0.06 + _PID_d * 0.8) * abs(sin((_angle / 180) * 3.14));
 
   // Penambah berfungsi untuk memberikan tambahan pwm ketika terjadi
   if (isHip) {

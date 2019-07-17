@@ -30,16 +30,18 @@ void setup() {
 
 void loop()
 {
-  trajectori(45, -45, 45, -45);
-  trajectori(45,0,45,0);
-  trajectori(-10,0, -10,0);
-  //  gaitLeft(45, -45);
-  //  gaitLeft(45, 0);
-  //  gaitLeft(-10, 0);
+  
+//    trajectori(45, -45, 45, -45);
+//    trajectori(45,0,45,0);
+//    trajectori(-10,0, -10,0);
 
-  //  gaitRight(45, -45);
-  //  gaitRight(45, 0);
-  //  gaitRight(-10, 0);
+  //    gaitLeft(45, -45);
+  //    gaitLeft(45, 0);
+  //    gaitLeft(-10, 0);
+
+  //    gaitRight(45, -45);
+  //    gaitRight(45, 0);
+  //    gaitRight(-10, 0);
 
   //    int angle_2 = -45;
   //    LeftKnee.FilterMedADC(290, 540, 45, -15);
@@ -51,15 +53,15 @@ void loop()
   //    LeftHip.GoToAngle(angle_1, LeftKnee.GetAngle(), 100, 90, 60, 35); // 150 100 60 35
   //    LeftHip.Driver(LeftHip.GetRotate(), true, LeftHip.GetSpeed());
 
-  //    int angle_3 =0;
-  //    RightKnee.FilterMedADC(320, 570, 45, -15);
-  //    RightKnee.GoToAngle(angle_3, 0, 15, 15, 40, 35);
-  //    RightKnee.Driver(RightKnee.GetRotate(), false, RightKnee.GetSpeed());
+  //      int angle_3 =-45;
+  //      RightKnee.FilterMedADC(320, 570, 45, -15);
+  //      RightKnee.GoToAngle(angle_3, 0, 15, 15, 40, 35, false);
+  //      RightKnee.Driver(RightKnee.GetRotate(), false, RightKnee.GetSpeed());
 
-  //  int angle_4 = 45;
-  //  RightHip.FilterMedADC(600, 850, 45, -15);
-  //  RightHip.GoToAngle(angle_4, RightKnee.GetAngle(), 150, 100, 60, 35);
-  //  RightHip.Driver(RightHip.GetRotate(), true, RightHip.GetSpeed());
+//  int angle_4 = 0;
+//  RightHip.FilterMedADC(600, 850, 45, -15);
+//  RightHip.GoToAngle(angle_4, RightKnee.GetAngle(), 150, 100, 60, 35, true);
+//  RightHip.Driver(RightHip.GetRotate(), true, RightHip.GetSpeed());
 }
 
 void gaitLeft (double angle_1, double angle_2) {
@@ -95,14 +97,15 @@ void trajectori(double angle_1, double angle_2, double angle_3, double angle_4) 
 
     // go to angle
     LeftHip.GoToAngle(angle_1, LeftKnee.GetAngle(), 100, 90, 60, 35, true);
-    RightHip.GoToAngle(angle_3, RightKnee.GetAngle(), 150, 100, 60, 35, true);
-    LeftKnee.GoToAngle(angle_2, 0, 15, 15, 35, 30, false);
-    RightKnee.GoToAngle(angle_4, 0, 15, 15, 40, 35, false);
-
-    //drive motor
     LeftHip.Driver(LeftHip.GetRotate(), true, LeftHip.GetSpeed());
+
+    RightHip.GoToAngle(angle_3, RightKnee.GetAngle(), 150, 100, 60, 35, true);
     RightHip.Driver(RightHip.GetRotate(), true, RightHip.GetSpeed());
+
+    LeftKnee.GoToAngle(angle_2, 0, 15, 15, 35, 30, false);
     LeftKnee.Driver(LeftKnee.GetRotate(), false, LeftKnee.GetSpeed());
+
+    RightKnee.GoToAngle(angle_4, 0, 15, 15, 40, 35, false);
     RightKnee.Driver(RightKnee.GetRotate(), false, RightKnee.GetSpeed());
   } while (LeftHip.GetRotate() != STOP || LeftKnee.GetRotate() != STOP || RightHip.GetRotate() != STOP || RightKnee.GetRotate() != STOP );
 }
