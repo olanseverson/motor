@@ -127,20 +127,21 @@ void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackw
 
   //  batasi speed dalam range :   bias2+penambah< pid < bias1+penambah
   if (abs(_PID_value) > (bias1 + Penambah)) {
-    dshow("1_");
+    //    dshow("1_");
     _speed = bias1 + Penambah;
   }
   else if (abs(_PID_value) < (bias2 + Penambah) ) {
-    dshow("2_");
+    //    dshow("2_");
     _speed = bias2 + Penambah;
   }
   else {
-    dshow("3_");
+    //    dshow("3_");
     _speed = abs(_PID_value);
   }
-  //  String buf = " posisi pid penambah speed " ;
-  //  buf = buf + String(_angle) + " " + String(_PID_value) + " " + String(Penambah) + " " + _speed;
-  //  Serial.println(buf);
+  //      String buf = " posisi pid penambah speed " ;
+  //      buf = buf + String(_angle) + " " + String(_PID_value) + " " + String(Penambah) + " " + _speed;
+  //      Serial.println(buf);
+  //      dshow(buf);
   dprint(_angle); dprint(_PID_value); dprint(Penambah);
 
   if (abs(delta) > _angleTolerance) { // di luar toleransi error

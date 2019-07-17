@@ -52,11 +52,11 @@ class Motor_IBT
     int BUFFER[MA_COEFF];
     int _idxBuff;
     volatile int _speed;
-    int _target;
+    volatile int _target;
     int _RPWM;
     int _LPWM;
     int _SensorPin;
-    float _angle;
+    volatile float _angle;
     int _angleTolerance;
     
     //PID constants
@@ -95,7 +95,7 @@ class Motor_IBT
     
     // variable
     Stream &serial;
-    rotateState _isRotate = STOP;
+    volatile rotateState _isRotate = STOP;
 };
 
 #endif

@@ -1,3 +1,5 @@
+#include <Arduino_FreeRTOS.h>
+#include <timers.h>
 #include "motor_ibt.h"
 
 /* Improve ADC sampling rate
@@ -13,12 +15,22 @@
 #endif
 
 // constructor
-Motor_IBT LeftHip(11, 12, A0, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
-Motor_IBT LeftKnee(2, 3, A1, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
 Motor_IBT RightHip(7, 8, A2, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
+Motor_IBT LeftHip(11, 12, A0, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
 Motor_IBT RightKnee(9, 10, A3, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
+Motor_IBT LeftKnee(2, 3, A1, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
 
-// the setup function runs once when you press reset or power the board
+void TaskRH( void *pvParameters );
+void TaskLH( void *pvParameters );
+void TaskRK( void *pvParameters );
+void TaskLK( void *pvParameters );
+
+double angleRH = 0; double angleRK = -5; double angleLH = 20; double angleLK = -30;
+//double angleRH = 0; double angleRK = 0; double angleLH = 0; double angleLK = 0;
+//double angleRH = 20; double angleRK = -30; double angleLH = 0; double angleLK = -5;
+
+int tDelay = 2;
+/********************************************VOID SETUP***********************************************/
 void setup() {
   // initialize serial communication at 115200 bits per second:
   Serial.begin(115200);
@@ -40,94 +52,138 @@ void setup() {
   //----------- Set PWM frequency for D9 & D10 ---------------
   TCCR2B = TCCR2B & B11111000 | B00000111;    // set timer 2 divisor to  1024 for PWM frequency of    30.64 Hz
 
-  //set adc prescaler to 16
+  //  set adc prescaler to 16
   sbi(ADCSRA, ADPS2); // set bit
   cbi(ADCSRA, ADPS1); // clear bit
   cbi(ADCSRA, ADPS0);
+
+  // Now set up many tasks to run independently.
+  xTaskCreate(TaskRH,  (const portCHAR *)"RightHIP"  ,  1000,  NULL,  1,  NULL );
+  xTaskCreate(TaskLH,  (const portCHAR *)"LeftHIP"   ,  1000,  NULL,  1,  NULL );
+  xTaskCreate(TaskRK,  (const portCHAR *)"RightKNEE" ,  1000,  NULL,  1,  NULL );
+  xTaskCreate(TaskLK,  (const portCHAR *)"LeftKNEE"  ,  1000,  NULL,  1,  NULL );
+  vTaskStartScheduler();
+
+  dshow("here");
 }
 
+/********************************************VOID LOOP***********************************************/
 void loop()
 {
-//  long int t = micros();
-  //  LeftHip.FilterMovADC(630, 880, 45, -15);
-  //  dprint(LeftHip.GetAngle());
-  //  Serial.println(micros() - t);
-
-  //    trajectori(45, -45, 45, -45);
-  //    trajectori(45,0,45,0);
-  //    trajectori(-10,0, -10,0);
-
-  //        gaitLeft(45, -45);
-  //        gaitLeft(45, 0);
-  //        gaitLeft(-10, 0);
-
-  //    gaitRight(45, -45);
-  //    gaitRight(45, 0);
-  //    gaitRight(-10, 0);
-
-  //  int angle_2 = 45;
-  //  LeftKnee.FilterMovADC(290, 540, 45, -15);
-  //  LeftKnee.GoToAngle(angle_2, 0, 15, 15, 35, 30, false); //15, 15, 40, 35, // 40, 40, 50, 30,
-  //  LeftKnee.Driver(LeftKnee.GetRotate(), false, LeftKnee.GetSpeed());
-
-  //    int angle_1 = 0;
-  //    LeftHip.FilterMedADC(630, 880, 45, -15);
-  //    LeftHip.GoToAngle(angle_1, LeftKnee.GetAngle(), 100, 90, 60, 35); // 150 100 60 35
-  //    LeftHip.Driver(LeftHip.GetRotate(), true, LeftHip.GetSpeed());
-
-  //      int angle_3 =-45;
-  //      RightKnee.FilterMedADC(320, 570, 45, -15);
-  //      RightKnee.GoToAngle(angle_3, 0, 15, 15, 40, 35, false);
-  //      RightKnee.Driver(RightKnee.GetRotate(), false, RightKnee.GetSpeed());
-
-  //  int angle_4 = 0;
-  //  RightHip.FilterMedADC(600, 850, 45, -15);
-  //  RightHip.GoToAngle(angle_4, RightKnee.GetAngle(), 150, 100, 60, 35, true);
-  //  RightHip.Driver(RightHip.GetRotate(), true, RightHip.GetSpeed());
+  //main loop is empty
 }
 
-void gaitLeft (double angle_1, double angle_2) {
-  do {
+/*--------------------------------------------------*/
+/*---------------------- Tasks ---------------------*/
+/*--------------------------------------------------*/
+
+void TaskRH(void *pvParameters)
+{
+  (void) pvParameters;  TickType_t xLastWakeTime;  int pin = 31;  pinMode(pin, OUTPUT); UBaseType_t uxHighWaterMark;
+  xLastWakeTime = xTaskGetTickCount();
+  bool value = false;
+
+
+  for (;;)// A Task shall never return or exit.
+  {
+    digitalWrite(pin, value = !value);
+
+    /*main task*/
+    RightHip.FilterMovADC(600, 850, 45, -15);
+    RightHip.GoToAngle(angleRH, RightKnee.GetAngle(), 150, 100, 60, 35, true);
+    RightHip.Driver(RightHip.GetRotate(), true, RightHip.GetSpeed());
+
+    /*debug task*/
+    dshow(1);
+    //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    //    dprint(uxHighWaterMark);
+
+    /*delay*/
+    //    vTaskDelay(tDelay);
+    vTaskDelayUntil( &xLastWakeTime, tDelay);
+  }
+}
+
+void TaskLH(void *pvParameters)
+{
+  (void) pvParameters;  TickType_t xLastWakeTime;  int pin = 49; UBaseType_t uxHighWaterMark;
+  pinMode(pin, OUTPUT);
+  bool value = false;
+  xLastWakeTime = xTaskGetTickCount();
+
+
+  for (;;)// A Task shall never return or exit.
+  {
+    digitalWrite(pin, value = !value);
+
+    /*main task*/
     LeftHip.FilterMovADC(630, 880, 45, -15);
+    LeftHip.GoToAngle(angleLH, LeftKnee.GetAngle(), 100, 90, 60, 35, true); // 150 100 60 35
+    LeftHip.Driver(LeftHip.GetRotate(), true, LeftHip.GetSpeed());
+
+    /*debug task*/
+    dshow(2);
+    //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    //    dprint(uxHighWaterMark);
+
+    /*delay*/
+    //    vTaskDelay(tDelay);
+    vTaskDelayUntil( &xLastWakeTime, tDelay);
+  }
+}
+
+void TaskRK(void *pvParameters)
+{
+  (void) pvParameters; int pin = 51; TickType_t xLastWakeTime; UBaseType_t uxHighWaterMark;
+  pinMode(pin, OUTPUT);
+  bool value = false;
+  xLastWakeTime = xTaskGetTickCount();
+
+
+  for (;;)// A Task shall never return or exit.
+  {
+    digitalWrite(pin, value = !value);
+
+    /*main task*/
+    RightKnee.FilterMovADC(320, 570, 45, -15);
+    RightKnee.GoToAngle(angleRK, 0, 15, 15, 40, 35, false);
+    RightKnee.Driver(RightKnee.GetRotate(), false, RightKnee.GetSpeed());
+
+    /*debug task*/
+    dshow(3);
+    //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    //    dprint(uxHighWaterMark);
+
+    /*delay*/
+    //    vTaskDelay(tDelay);
+    vTaskDelayUntil( &xLastWakeTime, tDelay);
+  }
+}
+
+void TaskLK(void *pvParameters)
+{
+  (void) pvParameters;  TickType_t xLastWakeTime;  int pin = 53; UBaseType_t uxHighWaterMark;
+  pinMode(pin, OUTPUT);
+  bool value = false;
+  xLastWakeTime = xTaskGetTickCount();
+
+
+  for (;;)// A Task shall never return or exit.
+  {
+    digitalWrite(pin, value = !value);
+
+    /*main task*/
     LeftKnee.FilterMovADC(290, 540, 45, -15);
-    LeftHip.GoToAngle(angle_1, LeftKnee.GetAngle(), 100, 90, 60, 35, true);
-    LeftHip.Driver(LeftHip.GetRotate(), true, LeftHip.GetSpeed());
-    LeftKnee.GoToAngle(angle_2, 0, 15, 15, 35, 30, false);
-    LeftKnee.Driver(LeftKnee.GetRotate(), false, LeftKnee.GetSpeed());
-  } while (LeftHip.GetRotate() != STOP || LeftKnee.GetRotate() != STOP );
-}
-
-void gaitRight(double angle_1, double angle_2) {
-  do {
-    RightHip.FilterMedADC(600, 850, 45, -15);
-    RightKnee.FilterMedADC(320, 570, 45, -15);
-    RightHip.GoToAngle(angle_1, RightKnee.GetAngle(), 150, 100, 60, 35, true);
-    RightKnee.GoToAngle(angle_2, 0, 15, 15, 40, 35, false);
-    RightHip.Driver(RightHip.GetRotate(), true, RightHip.GetSpeed());
-    RightKnee.Driver(RightKnee.GetRotate(), false, RightKnee.GetSpeed());
-  } while (RightHip.GetRotate() != STOP || RightKnee.GetRotate() != STOP );
-}
-
-
-void trajectori(double angle_1, double angle_2, double angle_3, double angle_4) {
-  do {
-    // adc filter
-    LeftHip.FilterMedADC(630, 880, 45, -15);
-    RightHip.FilterMedADC(600, 850, 45, -15);
-    LeftKnee.FilterMedADC(290, 540, 45, -15);
-    RightKnee.FilterMedADC(320, 570, 45, -15);
-
-    // go to angle
-    LeftHip.GoToAngle(angle_1, LeftKnee.GetAngle(), 100, 90, 60, 35, true);
-    LeftHip.Driver(LeftHip.GetRotate(), true, LeftHip.GetSpeed());
-
-    RightHip.GoToAngle(angle_3, RightKnee.GetAngle(), 150, 100, 60, 35, true);
-    RightHip.Driver(RightHip.GetRotate(), true, RightHip.GetSpeed());
-
-    LeftKnee.GoToAngle(angle_2, 0, 15, 15, 35, 30, false);
+    LeftKnee.GoToAngle(angleLK, 0, 15, 15, 35, 30, false); //15, 15, 40, 35, // 40, 40, 50, 30,
     LeftKnee.Driver(LeftKnee.GetRotate(), false, LeftKnee.GetSpeed());
 
-    RightKnee.GoToAngle(angle_4, 0, 15, 15, 40, 35, false);
-    RightKnee.Driver(RightKnee.GetRotate(), false, RightKnee.GetSpeed());
-  } while (LeftHip.GetRotate() != STOP || LeftKnee.GetRotate() != STOP || RightHip.GetRotate() != STOP || RightKnee.GetRotate() != STOP );
+    /*debug task*/
+    dshow(4);
+    //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    //    dprint(uxHighWaterMark);Serial.println();
+
+    /*delay*/
+    //    vTaskDelay(tDelay);
+    vTaskDelayUntil( &xLastWakeTime, tDelay);
+  }
 }
