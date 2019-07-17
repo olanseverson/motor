@@ -104,7 +104,8 @@ void Motor_IBT::FilterMedADC(int lowADC, int highADC, int highAngle, int lowAngl
 void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackward, int bias1, int bias2, bool isHip)
 {
   double Penambah = 0;
-  double delta = toAngle - _angle;
+  _target = toAngle;
+  double delta = _target - _angle;
   _PID_i = _PID_i + delta;
   _PID_d = delta - _prev_error;
   _prev_error = delta;
@@ -112,9 +113,9 @@ void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackw
 
   // Penambah berfungsi untuk memberikan tambahan pwm ketika terjadi
   if (isHip) {
-    if ((_angle < 0) && toAngle < 0) //
+    if ((_angle < 0) && _target < 0) //
       Penambah = cBackward * abs(sin((_angle / 180) * 3.14)) + (10 * abs(sin((addedTorque / 180) * 3.14))); // naik ke belakang
-    else if ((_angle > 0) && toAngle > 0)
+    else if ((_angle > 0) && _target > 0)
       Penambah = cForward * abs(sin((_angle / 180) * 3.14)) + (30 * abs(sin((addedTorque / 180) * 3.14))); //naik ke depan
   } else {
     Penambah = cForward * abs(sin((_angle / 180) * 3.14));
@@ -142,7 +143,7 @@ void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackw
   //      buf = buf + String(_angle) + " " + String(_PID_value) + " " + String(Penambah) + " " + _speed;
   //      Serial.println(buf);
   //      dshow(buf);
-  dprint(_angle); dprint(_PID_value); dprint(Penambah);
+  //  dprint(_angle); dprint(_PID_value); dprint(Penambah);
 
   if (abs(delta) > _angleTolerance) { // di luar toleransi error
     _isRotate = CCW;

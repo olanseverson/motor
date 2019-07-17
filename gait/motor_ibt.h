@@ -23,6 +23,7 @@
 */
 /*DEBUGGING PURPOSES*/
 #define DEBUG 1
+
 #if DEBUG == 1
 #define dprint(expression) Serial.print("# "); Serial.print( #expression ); Serial.print( ": " ); Serial.println( expression )
 #define dshow(expression) Serial.println( expression )
@@ -58,7 +59,7 @@ class Motor_IBT
     int _SensorPin;
     volatile float _angle;
     int _angleTolerance;
-    
+
     //PID constants
     double _PID_d;
     double _PID_i;
@@ -71,28 +72,56 @@ class Motor_IBT
     Motor_IBT(int Pin_RPWM, int Pin_LPWM, int SensorPin, Stream &serial);
     void Driver(enum rotateState, bool isHip, int Speed);
     void FilterMovADC(int lowADC, int highADC, int highAngle, int lowAngle); //moving average filter
-    void FilterMedADC(int lowADC, int highADC, int highAngle, int lowAngle); //median filter 
+    void FilterMedADC(int lowADC, int highADC, int highAngle, int lowAngle); //median filter
     void GoToAngle(int toAngle, int addedTorque, int cForward, int cBackward, int bias1, int bias2, bool isHip);
 
     /*GETTER*/
-    int GetADC() {return this->_ADC;}
-    int GetFilteredADC() {return _filteredADC;}
-    int GetTarget() {return _target;}
-    rotateState GetRotate() {return _isRotate;}
-    int GetSpeed() {return _speed;}
-    int GetTolerance () {return _angleTolerance;}
-    int GetPIDValue(){return _PID_value;}
-    float GetAngle(){return _angle;}
+    int GetADC() {
+      return this->_ADC;
+    }
+    int GetFilteredADC() {
+      return _filteredADC;
+    }
+    int GetTarget() {
+      return _target;
+    }
+    rotateState GetRotate() {
+      return _isRotate;
+    }
+    int GetSpeed() {
+      return _speed;
+    }
+    int GetTolerance () {
+      return _angleTolerance;
+    }
+    int GetPIDValue() {
+      return _PID_value;
+    }
+    float GetAngle() {
+      return _angle;
+    }
 
     /*SETTER*/
-    void SetRotate(rotateState Rotate) {_isRotate = Rotate;}
-    void SetFilteredADC(int filteredADC){_filteredADC = filteredADC;}
-    void SetSpeed(int Speed) {_speed = Speed;}
-    void SetTolerance (int tolerance){_angleTolerance = tolerance;}
-    void SetPIDValue(int pidvalue){_PID_value = pidvalue;}
-    void SetAngle(float angle){_angle = angle;}
+    void SetRotate(rotateState Rotate) {
+      _isRotate = Rotate;
+    }
+    void SetFilteredADC(int filteredADC) {
+      _filteredADC = filteredADC;
+    }
+    void SetSpeed(int Speed) {
+      _speed = Speed;
+    }
+    void SetTolerance (int tolerance) {
+      _angleTolerance = tolerance;
+    }
+    void SetPIDValue(int pidvalue) {
+      _PID_value = pidvalue;
+    }
+    void SetAngle(float angle) {
+      _angle = angle;
+    }
 
-    
+
     // variable
     Stream &serial;
     volatile rotateState _isRotate = STOP;

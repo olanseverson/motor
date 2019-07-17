@@ -24,12 +24,21 @@ void TaskRH( void *pvParameters );
 void TaskLH( void *pvParameters );
 void TaskRK( void *pvParameters );
 void TaskLK( void *pvParameters );
+void TaskGait( void *pvParameters );
 
-double angleRH = 0; double angleRK = -5; double angleLH = 20; double angleLK = -30;
-//double angleRH = 0; double angleRK = 0; double angleLH = 0; double angleLK = 0;
-//double angleRH = 20; double angleRK = -30; double angleLH = 0; double angleLK = -5;
+double angleGait [3][5] = {
+  // {0, RH, RK, LH, LK}
+  {0, -10 , -5, 20, -30},
+  {0, 0 ,  0,  0,   0},
+  {0, 20, -30,  -10,  -5}
+};
+volatile int phase = 0; // increment for angleGait
 
-int tDelay = 2;
+double angleRH = 0; double angleRK = 0; double angleLH = 0; double angleLK = 0;
+
+int tDelay = 5; // delay for motor task (in tick)
+int gaitDelay = 2000;// delay for next gait (in ms)
+
 /********************************************VOID SETUP***********************************************/
 void setup() {
   // initialize serial communication at 115200 bits per second:
@@ -62,24 +71,56 @@ void setup() {
   xTaskCreate(TaskLH,  (const portCHAR *)"LeftHIP"   ,  1000,  NULL,  1,  NULL );
   xTaskCreate(TaskRK,  (const portCHAR *)"RightKNEE" ,  1000,  NULL,  1,  NULL );
   xTaskCreate(TaskLK,  (const portCHAR *)"LeftKNEE"  ,  1000,  NULL,  1,  NULL );
+  xTaskCreate(TaskGait,  (const portCHAR *)"Gait"  ,  192,  NULL,  2,  NULL );
   vTaskStartScheduler();
 
   dshow("here");
 }
+/****************************************************************************************************/
 
 /********************************************VOID LOOP***********************************************/
 void loop()
 {
   //main loop is empty
 }
+/****************************************************************************************************/
+
 
 /*--------------------------------------------------*/
 /*---------------------- Tasks ---------------------*/
 /*--------------------------------------------------*/
+void TaskGait( void *pvParameters ) {
+  (void) pvParameters;  TickType_t xLastWakeTime;  int pin = 31;  pinMode(pin, OUTPUT); UBaseType_t uxHighWaterMark;
+  xLastWakeTime = xTaskGetTickCount();
+  bool value = false;
+
+
+  for (;;)// A Task shall never return or exit.
+  {
+    digitalWrite(pin, value = !value);
+
+    /*main task*/
+    phase = phase % 3;
+    angleRH = angleGait[phase][1];
+    angleRK = angleGait[phase][2];
+    angleLH = angleGait[phase][3];
+    angleLK = angleGait[phase][4];
+    phase++;
+
+    /*debug task*/
+    dprint(0);
+    //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
+    //    dprint(uxHighWaterMark);
+
+    /*delay*/
+    //    vTaskDelay(tDelay);
+    vTaskDelayUntil( &xLastWakeTime, (gaitDelay / portTICK_PERIOD_MS));
+  }
+}
 
 void TaskRH(void *pvParameters)
 {
-  (void) pvParameters;  TickType_t xLastWakeTime;  int pin = 31;  pinMode(pin, OUTPUT); UBaseType_t uxHighWaterMark;
+  (void) pvParameters;  TickType_t xLastWakeTime;  int pin = 33;  pinMode(pin, OUTPUT); UBaseType_t uxHighWaterMark;
   xLastWakeTime = xTaskGetTickCount();
   bool value = false;
 
@@ -95,6 +136,7 @@ void TaskRH(void *pvParameters)
 
     /*debug task*/
     dshow(1);
+    dprint(RightHip.GetTarget());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);
 
@@ -123,6 +165,7 @@ void TaskLH(void *pvParameters)
 
     /*debug task*/
     dshow(2);
+    dprint(LeftHip.GetTarget());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);
 
@@ -151,6 +194,7 @@ void TaskRK(void *pvParameters)
 
     /*debug task*/
     dshow(3);
+    dprint(RightKnee.GetTarget());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);
 
@@ -179,6 +223,7 @@ void TaskLK(void *pvParameters)
 
     /*debug task*/
     dshow(4);
+    dprint(LeftKnee.GetTarget());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);Serial.println();
 
