@@ -6,6 +6,11 @@
    http://yaab-arduino.blogspot.com/2015/02/fast-sampling-from-analog-input.html
    https://www.instructables.com/id/Girino-Fast-Arduino-Oscilloscope/
 */
+
+/* Human gait pattern
+ * https://www.researchgate.net/post/I_need_human_gait_data_for_normal_walk_and_fast_walk_is_there_any_standard_database_for_storing_this_type_of_data
+*/
+
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
@@ -26,18 +31,19 @@ void TaskRK( void *pvParameters );
 void TaskLK( void *pvParameters );
 void TaskGait( void *pvParameters );
 
-double angleGait [3][5] = {
-  // {0, RH, RK, LH, LK}
-  {0, -10 , -5, 20, -30},
-  {0, 0 ,  0,  0,   0},
-  {0, 20, -30,  -10,  -5}
+double angleGait [5][10] = {
+  {0,0,0,0,0,0,0,0,0,0}, 
+  {-8.2, -2.3, 16.7, 30.9, 32.8,33.0, 29.9, 19.7, 7.5, -2.9}, // RH
+  {14.1, 37.2, 49, 40, 18.7, 7.9, 19.0, 16.2, 10.2, 7.3 },   // RK
+  {33.0, 29.9, 19.7, 7.5, -2.9, -8.2, -2.3, 16.7, 30.9, 32.8}, // LH
+  {7.9, 19.0, 16.2, 10.2, 7.3, 14.1, 37.2, 49, 40, 18.7}   // LK
 };
 volatile int phase = 0; // increment for angleGait
 
 double angleRH = 0; double angleRK = 0; double angleLH = 0; double angleLK = 0;
 
 int tDelay = 5; // delay for motor task (in tick)
-int gaitDelay = 2000;// delay for next gait (in ms)
+int gaitDelay = 700;// delay for next gait (in ms)
 
 /********************************************VOID SETUP***********************************************/
 void setup() {
@@ -100,11 +106,11 @@ void TaskGait( void *pvParameters ) {
     digitalWrite(pin, value = !value);
 
     /*main task*/
-    phase = phase % 3;
-    angleRH = angleGait[phase][1];
-    angleRK = angleGait[phase][2];
-    angleLH = angleGait[phase][3];
-    angleLK = angleGait[phase][4];
+    phase = phase % 10;
+    angleRH = angleGait[1][phase];
+    angleRK = angleGait[2][phase];
+    angleLH = angleGait[3][phase];
+    angleLK = angleGait[4][phase];
     phase++;
 
     /*debug task*/
