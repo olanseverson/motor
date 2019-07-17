@@ -9,7 +9,6 @@
   || | https://electronics.stackexchange.com/questions/398556/how-to-control-a-motor-driver-bts7960-without-pwm
   || #
   ||
-  ||
 */
 #include "motor_ibt.h"
 
@@ -22,8 +21,7 @@ Motor_IBT::Motor_IBT(int Pin_RPWM, int Pin_LPWM, int SensorPin, Stream &serial):
 {
   pinMode(_RPWM, OUTPUT);
   pinMode(_LPWM, OUTPUT);
-//  TCCR0B = TCCR0B & B11111000 | B00000101; // reduce PWM frequency
-  
+
   _filteredADC = analogRead(_SensorPin);
   _angleTolerance = 2;
 
@@ -33,33 +31,63 @@ Motor_IBT::Motor_IBT(int Pin_RPWM, int Pin_LPWM, int SensorPin, Stream &serial):
     BUFFER[i] = _filteredADC;
   }
   _idxBuff = 0;
-  _pid_d = 0.0;
-  _pid_i = 0.0;
+  _PID_d = 0.0;
+  _PID_i = 0.0;
   _prev_error = 0.0;
-  _pid_value = 0.0;
+  _PID_value = 0.0;
 }
 
-void Motor_IBT::Driver(rotateState IsRotate, int Speed = 255)
+void Motor_IBT::Driver(rotateState IsRotate, bool isHip, int Speed)
 {
-  switch (IsRotate)
-  {
-    case CCW :
-      int turun;
-      if (_filteredADC < 0)
-        turun = 25 - 2 * _filteredADC;
-      else
-        turun = 20;
-      analogWrite(_LPWM, 0);
-      analogWrite(_RPWM, turun);
-      break;
-    case CW :
-      analogWrite(_LPWM, Speed);
-      analogWrite(_RPWM, 0);
-      break;
-    case STOP :
-      analogWrite(_LPWM, Speed);
-      analogWrite(_RPWM, Speed);
-      break;
+  //  switch (IsRotate)  {
+  //    case CCW :
+  //      Serial.println('a');
+  //      int turun = Speed; // naik ke belakang
+  //      if (isHip && _angle >= 0) {
+  //        turun = 45 - _angle / 2; // jatuh
+  //      }
+  //      analogWrite(_LPWM, 0);
+  //      analogWrite(_RPWM, turun);
+  //      break;
+  //    case CW :
+  //      Serial.println('b');
+  //      int gerak = Speed; // naik ke depan
+  //      if (isHip && _angle >= 0) {
+  //        gerak = 35 - _angle / 2; // jatuh
+  //      }
+  //      analogWrite(_LPWM, gerak);
+  //      analogWrite(_RPWM, 0);
+  //      break;
+  //    case STOP :
+  //      Serial.println('c');
+  //      analogWrite(_LPWM, 255);
+  //      analogWrite(_RPWM, 255);
+  //      break;
+  //    default:
+  //      Serial.println("knp kesini");
+  //  }
+  if (IsRotate == CCW) {
+    //    Serial.println('a');
+    int turun = Speed; // naik ke belakang
+    if (isHip && _angle >= 0) {
+      turun = 45 - _angle / 2; // jatuh
+      //      Serial.println("here?");
+    }
+    analogWrite(_LPWM, 0);
+    analogWrite(_RPWM, abs(turun));
+  } else if (IsRotate == CW) {
+    //    Serial.println('b');
+    int gerak = Speed; // naik ke depan
+    if (isHip && _angle < 0) {
+      gerak = 45 - _angle / 2; // jatuh
+      //      Serial.println("here");
+    }
+    analogWrite(_LPWM, abs(gerak));
+    analogWrite(_RPWM, 0);
+  } else if (IsRotate == STOP) {
+    //    Serial.println('c');
+    analogWrite(_LPWM, 255);
+    analogWrite(_RPWM, 255);
   }
 }
 
@@ -82,7 +110,7 @@ void Motor_IBT::FilterMovADC()
   _angle = map(_filteredADC, 0, 1023, 0, 300);
 }
 
-void Motor_IBT::FilterMedADC()
+void Motor_IBT::FilterMedADC(int lowADC, int highADC, int highAngle, int lowAngle)
 {
   float ir_val[MED_COEFF];
   for (int i = 0; i < MED_COEFF; i++) {
@@ -103,55 +131,62 @@ void Motor_IBT::FilterMedADC()
     if (flag) break;
   }
   _filteredADC = ir_val[len / 2];
-  _angle = map(_filteredADC, 0, 1023, 0, 300);
+  _angle = map(_filteredADC, lowADC, highADC, highAngle, lowAngle);
 }
 
 
-void Motor_IBT::GoToAngle(int toAngle, int Speed)
-// Speed   : 0 - 255
-// toAngle : 0 - 1023 degree
+void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackward, int bias1, int bias2, bool isHip)
 {
-  int delta = toAngle - _filteredADC;
-  _target = toAngle;
-  _speed = Speed;
-
-  if (abs(delta) > GetTolerance()) {
-    _IsRotate = CW;
-    if (delta > 0) {
-      _IsRotate = CCW;
-    }
-  }
-  else
-  { // stop
-    _IsRotate = STOP;
-    _pid_i = 0;
-    _prev_error = 0;
-    _pid_value = 0;
-  }
-}
-
-int Motor_IBT::PositionPID (double Kp, double Ki , double Kd)
-{
-  double delta = _target - _filteredADC;
-  _pid_i = _pid_i + delta;
-  _pid_d = delta - _prev_error;
+  double Penambah = 0;
+  double delta = toAngle - _angle;
+  _PID_i = _PID_i + delta;
+  _PID_d = delta - _prev_error;
   _prev_error = delta;
-  _pid_value = (delta * Kp + _pid_i * Ki + _pid_d * Kd) * abs(sin((_filteredADC / 180) * 3.14));
-  double Penambah = 10 * sin((_filteredADC / 180) * 3.14);
-  if (Penambah < 0)
-    Penambah = 0;
-  if (Penambah > 50)
-    Penambah = 50;
+  _PID_value = (delta * 0.6 + _PID_i * 0.05 + _PID_d * 0.1) * abs(sin((_angle / 180) * 3.14));
 
-  int pwm = 0;
-  if (abs(_pid_value) > (50 + Penambah))
-    pwm = 50 + Penambah;
-  else if (abs(_pid_value) < (20 + Penambah) )
-    pwm = 20 + Penambah;
-  else
-    pwm = _pid_value;
+  // Penambah berfungsi untuk memberikan tambahan pwm ketika terjadi
+  if (isHip) {
+    if ((_angle < 0) && toAngle < 0) //
+      Penambah = cBackward * abs(sin((_angle / 180) * 3.14)) + (10 * abs(sin((addedTorque / 180) * 3.14))); // naik ke belakang
+    else if ((_angle > 0) && toAngle > 0)
+      Penambah = cForward * abs(sin((_angle / 180) * 3.14)) + (30 * abs(sin((addedTorque / 180) * 3.14))); //naik ke depan
+  } else {
+    Penambah = cForward* abs(sin((_angle / 180) * 3.14));
+  }
 
-  return pwm;
+
+  // batasi dalam range 0-bias1
+  if (Penambah < 0)Penambah = 0;
+  if (Penambah > bias1)Penambah = bias1;
+
+  //  batasi speed dalam range :   bias2+penambah< pid < bias1+penambah
+  if (abs(_PID_value) > (bias1 + Penambah)) {
+    Serial.print("1_");
+    _speed = bias1 + Penambah;
+  }
+  else if (abs(_PID_value) < (bias2 + Penambah) ) {
+    Serial.print("2_");
+    _speed = bias2 + Penambah;
+  }
+  else {
+    Serial.print("3_");
+    _speed = abs(_PID_value);
+  }
+  String buf = " posisi pid penambah speed " ;
+  buf = buf + String(_angle) + " " + String(_PID_value) + " " + String(Penambah) + " " + _speed;
+  Serial.println(buf);
+
+  if (abs(delta) > _angleTolerance) { // di luar toleransi error
+    _isRotate = CCW;
+    if (delta > 0) {
+      _isRotate = CW;
+    }
+  } else { // error dapat ditoleransi
+    _isRotate = STOP;
+    _PID_i = 0;
+    _prev_error = 0;
+    _PID_value = 0;
+  }
 }
 
 
