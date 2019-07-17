@@ -61,7 +61,7 @@ class Motor_IBT
     //methods
     Motor_IBT(int Pin_RPWM, int Pin_LPWM, int SensorPin, Stream &serial);
     void Driver(enum rotateState, bool isHip, int Speed);
-    void FilterMovADC(); //moving average filter
+    void FilterMovADC(int lowADC, int highADC, int highAngle, int lowAngle); //moving average filter
     void FilterMedADC(int lowADC, int highADC, int highAngle, int lowAngle); //median filter 
     void GoToAngle(int toAngle, int addedTorque, int cForward, int cBackward, int bias1, int bias2, bool isHip);
 
