@@ -40,25 +40,20 @@ Motor_IBT::Motor_IBT(int Pin_RPWM, int Pin_LPWM, int SensorPin, Stream &serial):
 void Motor_IBT::Driver(rotateState IsRotate, bool isHip, int Speed)
 {
   if (IsRotate == CCW) {
-    //    Serial.println('a');
     int turun = Speed; // naik ke belakang
     if (isHip && _angle >= 0) {
       turun = 45 - _angle / 2; // jatuh
-      //      Serial.println("here?");
     }
     analogWrite(_LPWM, 0);
     analogWrite(_RPWM, abs(turun));
   } else if (IsRotate == CW) {
-    //    Serial.println('b');
     int gerak = Speed; // naik ke depan
     if (isHip && _angle < 0) {
       gerak = 45 - _angle / 2; // jatuh
-      //      Serial.println("here");
     }
     analogWrite(_LPWM, abs(gerak));
     analogWrite(_RPWM, 0);
   } else if (IsRotate == STOP) {
-    //    Serial.println('c');
     analogWrite(_LPWM, 255);
     analogWrite(_RPWM, 255);
   }
@@ -122,7 +117,7 @@ void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackw
     else if ((_angle > 0) && toAngle > 0)
       Penambah = cForward * abs(sin((_angle / 180) * 3.14)) + (30 * abs(sin((addedTorque / 180) * 3.14))); //naik ke depan
   } else {
-    Penambah = cForward* abs(sin((_angle / 180) * 3.14));
+    Penambah = cForward * abs(sin((_angle / 180) * 3.14));
   }
 
 
@@ -132,20 +127,21 @@ void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackw
 
   //  batasi speed dalam range :   bias2+penambah< pid < bias1+penambah
   if (abs(_PID_value) > (bias1 + Penambah)) {
-//    Serial.print("1_");
+    dshow("1_");
     _speed = bias1 + Penambah;
   }
   else if (abs(_PID_value) < (bias2 + Penambah) ) {
-//    Serial.print("2_");
+    dshow("2_");
     _speed = bias2 + Penambah;
   }
   else {
-//    Serial.print("3_");
+    dshow("3_");
     _speed = abs(_PID_value);
   }
-  String buf = " posisi pid penambah speed " ;
-  buf = buf + String(_angle) + " " + String(_PID_value) + " " + String(Penambah) + " " + _speed;
-//  Serial.println(buf);
+  //  String buf = " posisi pid penambah speed " ;
+  //  buf = buf + String(_angle) + " " + String(_PID_value) + " " + String(Penambah) + " " + _speed;
+  //  Serial.println(buf);
+  dprint(_angle); dprint(_PID_value); dprint(Penambah);
 
   if (abs(delta) > _angleTolerance) { // di luar toleransi error
     _isRotate = CCW;

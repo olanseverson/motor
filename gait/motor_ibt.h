@@ -21,6 +21,15 @@
   IBT-2 pin 8 (GND) to Arduino GND
   IBT-2 pins 5 (R_IS) and 6 (L_IS) not connected
 */
+/*DEBUGGING PURPOSES*/
+#define DEBUG 1
+#if DEBUG == 1
+#define dprint(expression) Serial.print("# "); Serial.print( #expression ); Serial.print( ": " ); Serial.println( expression )
+#define dshow(expression) Serial.println( expression )
+#else
+#define dprint(expression)
+#define dshow(expression)
+#endif
 
 #ifndef MOTOR_IBT_H
 #define MOTOR_IBT_H

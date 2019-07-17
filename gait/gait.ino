@@ -12,18 +12,7 @@
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-/*DEBUGGING PURPOSES*/
-#define DEBUG 1
-
-#if DEBUG == 1
-#define dprint(expression) Serial.print("# "); Serial.print( #expression ); Serial.print( ": " ); Serial.println( expression )
-#define dshow(expression) Serial.println( expression )
-#else
-#define dprint(expression)
-#define dshow(expression)
-#endif
-
-// constructor 
+// constructor
 Motor_IBT LeftHip(11, 12, A0, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
 Motor_IBT LeftKnee(2, 3, A1, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
 Motor_IBT RightHip(7, 8, A2, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
@@ -59,28 +48,27 @@ void setup() {
 
 void loop()
 {
-  long int t = micros();
-  LeftHip.FilterMovADC(630, 880, 45, -15);
-  //  Serial.print(LeftHip.GetAngle());
-  dprint(LeftHip.GetAngle());
-  Serial.println(micros() - t);
+//  long int t = micros();
+  //  LeftHip.FilterMovADC(630, 880, 45, -15);
+  //  dprint(LeftHip.GetAngle());
+  //  Serial.println(micros() - t);
 
   //    trajectori(45, -45, 45, -45);
   //    trajectori(45,0,45,0);
   //    trajectori(-10,0, -10,0);
 
-  //      gaitLeft(45, -45);
-  //      gaitLeft(45, 0);
-  //      gaitLeft(-10, 0);
+  //        gaitLeft(45, -45);
+  //        gaitLeft(45, 0);
+  //        gaitLeft(-10, 0);
 
   //    gaitRight(45, -45);
   //    gaitRight(45, 0);
   //    gaitRight(-10, 0);
 
-  //      int angle_2 = 45;
-  //      LeftKnee.FilterMovADC(290, 540, 45, -15);
-  //      LeftKnee.GoToAngle(angle_2, 0, 15, 15, 35, 30, false); //15, 15, 40, 35, // 40, 40, 50, 30,
-  //      LeftKnee.Driver(LeftKnee.GetRotate(), false, LeftKnee.GetSpeed());
+  //  int angle_2 = 45;
+  //  LeftKnee.FilterMovADC(290, 540, 45, -15);
+  //  LeftKnee.GoToAngle(angle_2, 0, 15, 15, 35, 30, false); //15, 15, 40, 35, // 40, 40, 50, 30,
+  //  LeftKnee.Driver(LeftKnee.GetRotate(), false, LeftKnee.GetSpeed());
 
   //    int angle_1 = 0;
   //    LeftHip.FilterMedADC(630, 880, 45, -15);
