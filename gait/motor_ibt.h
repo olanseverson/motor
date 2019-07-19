@@ -22,15 +22,29 @@
   IBT-2 pins 5 (R_IS) and 6 (L_IS) not connected
 */
 /*DEBUGGING PURPOSES*/
-#define DEBUG 1
+#define DEBUG 5
 
-#if DEBUG == 1
+#if DEBUG == 0
 #define dprint(expression) Serial.print("# "); Serial.print( #expression ); Serial.print( ": " ); Serial.println( expression )
 #define dshow(expression) Serial.println( expression )
+
+#define visualize(expression)
+#define bias(expression)
+
 #else
 #define dprint(expression)
 #define dshow(expression)
+
+#define visualize(expression) Serial.print(expression);Serial.print(",")
+#if DEBUG == 5
+#define newline
+#define bias 75
+#else
+#define newline Serial.println()
+#define bias 0
 #endif
+#endif
+
 
 #ifndef MOTOR_IBT_H
 #define MOTOR_IBT_H
@@ -70,10 +84,11 @@ class Motor_IBT
   public:
     //methods
     Motor_IBT(int Pin_RPWM, int Pin_LPWM, int SensorPin, Stream &serial);
-    void Driver(enum rotateState, bool isHip, int Speed);
+    void Driver(enum rotateState, bool isHip, int Speed, int DownCCW, int DownCW);
     void FilterMovADC(int lowADC, int highADC, int highAngle, int lowAngle); //moving average filter
     void FilterMedADC(int lowADC, int highADC, int highAngle, int lowAngle); //median filter
     void GoToAngle(int toAngle, int addedTorque, int cForward, int cBackward, int bias1, int bias2, bool isHip);
+    void ResetPID();
 
     /*GETTER*/
     int GetADC() {

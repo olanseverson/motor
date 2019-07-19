@@ -23,7 +23,7 @@ Motor_IBT::Motor_IBT(int Pin_RPWM, int Pin_LPWM, int SensorPin, Stream &serial):
   pinMode(_LPWM, OUTPUT);
 
   _filteredADC = analogRead(_SensorPin);
-  _angleTolerance = 2;
+  _angleTolerance = 1;
 
   // initialize variables
   for (int i = 0; i < MA_COEFF; i++)
@@ -37,19 +37,19 @@ Motor_IBT::Motor_IBT(int Pin_RPWM, int Pin_LPWM, int SensorPin, Stream &serial):
   _PID_value = 0.0;
 }
 
-void Motor_IBT::Driver(rotateState IsRotate, bool isHip, int Speed)
+void Motor_IBT::Driver(rotateState IsRotate, bool isHip, int Speed, int DownCCW, int DownCW)
 {
   if (IsRotate == CCW) {
     int turun = Speed; // naik ke belakang
     if (isHip && _angle >= 0) {
-      turun = 45 - _angle / 2; // jatuh
+      turun = DownCCW - _angle / 2; // jatuh
     }
     analogWrite(_LPWM, 0);
     analogWrite(_RPWM, abs(turun));
   } else if (IsRotate == CW) {
     int gerak = Speed; // naik ke depan
     if (isHip && _angle < 0) {
-      gerak = 45 - _angle / 2; // jatuh
+      gerak = DownCW + _angle / 2; // jatuh
     }
     analogWrite(_LPWM, abs(gerak));
     analogWrite(_RPWM, 0);
@@ -114,9 +114,9 @@ void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackw
   // Penambah berfungsi untuk memberikan tambahan pwm ketika terjadi
   if (isHip) {
     if ((_angle < 0) && _target < 0) //
-      Penambah = cBackward * abs(sin((_angle / 180) * 3.14)) + (10 * abs(sin((addedTorque / 180) * 3.14))); // naik ke belakang
+      Penambah = cBackward * abs(sin((_angle / 180) * 3.14)) + (30 * abs(sin((addedTorque / 180) * 3.14))); // naik ke belakang
     else if ((_angle > 0) && _target > 0)
-      Penambah = cForward * abs(sin((_angle / 180) * 3.14)) + (30 * abs(sin((addedTorque / 180) * 3.14))); //naik ke depan
+      Penambah = cForward * abs(sin((_angle / 180) * 3.14)) + (10 * abs(sin((addedTorque / 180) * 3.14))); //naik ke depan
   } else {
     Penambah = cForward * abs(sin((_angle / 180) * 3.14));
   }
@@ -128,15 +128,15 @@ void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackw
 
   //  batasi speed dalam range :   bias2+penambah< pid < bias1+penambah
   if (abs(_PID_value) > (bias1 + Penambah)) {
-    //    dshow("1_");
+    //        dshow("1_");
     _speed = bias1 + Penambah;
   }
   else if (abs(_PID_value) < (bias2 + Penambah) ) {
-    //    dshow("2_");
+    //        dshow("2_");
     _speed = bias2 + Penambah;
   }
   else {
-    //    dshow("3_");
+    //        dshow("3_");
     _speed = abs(_PID_value);
   }
   //      String buf = " posisi pid penambah speed " ;
@@ -158,7 +158,12 @@ void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackw
   }
 }
 
-
+void Motor_IBT::ResetPID() {
+  _isRotate = STOP;
+  _PID_i = 0;
+  _prev_error = 0;
+  _PID_value = 0;
+}
 /*
   || @changelog
   || | 1.0 2019-03-13 - Yoland Nababan : Initial Release
