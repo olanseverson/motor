@@ -42,7 +42,7 @@ void TaskGait( void *pvParameters );
 //  {7.9, 19.0, 16.2, 10.2, 7.3, 14.1, 37.2, 62.4, 54.2, 18.7},   // RK
 //  {33.0, 29.9, 19.7, 7.5, -2.9, -8.2, -2.3, 16.7, 30.9, 32.8}, // LH
 //  {7.9, 19.0, 16.2, 10.2, 7.3, 14.1, 37.2, 62.4, 54.2, 18.7}   // LK
-//};StageNumber
+//};
 
 //float angleGait [5][8] = {
 //  {0, 0, 0, 0, 0, 0, 0, 0},
@@ -55,9 +55,9 @@ void TaskGait( void *pvParameters );
 #define MaxPhase 20
 int angleGait[5][MaxPhase] = {
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-  {33, 32, 29, 25, 19, 13, 7, 1, -2, -6, -8, -7, -2, 7, 16, 24, 30, 33, 32, 31},// RH
+  {33, 32, 29, 25, 19, 13, 7, 1, -2, -6, -8, -7, -2, 7, 16, 24, 28, 30, 33, 33},// LH{33, 32, 29, 25, 19, 13, 7, 1, -2, -6, -8, -7, -2, 7, 16, 24, 30, 33, 32, 31},// RH
   {7, 13, 19, 18, 16, 13, 10, 7, 7, 9, 14, 22, 37, 53, 62, 62, 54, 38, 18, 4},// RK
-  {33, 32, 29, 25, 19, 13, 7, 1, -2, -6, -8, -7, -2, 7, 16, 24, 30, 33, 32, 31},// LH
+  {33, 32, 29, 25, 19, 13, 7, 1, -2, -6, -8, -7, -2, 7, 16, 24, 28, 30, 33, 33},// LH
   {7, 13, 19, 18, 16, 13, 10, 7, 7, 9, 14, 22, 37, 53, 62, 62, 54, 38, 18, 4}// LK
 };
 
@@ -66,7 +66,7 @@ volatile unsigned int phaseNow = 0; // increment for angleGait
 double angleRH = 0; double angleRK = 0; double angleLH = 0; double angleLK = 0;
 
 int tDelay = 2; // delay for motor task (in tick)
-int gaitDelay = 1000;// delay for next gait (in ms)
+int gaitDelay = 140; // delay for next gait (in ms)
 #define pinSwitch 5
 /********************************************VOID SETUP***********************************************/
 void setup() {
@@ -78,21 +78,22 @@ void setup() {
   }
 
   //----------- Set PWM frequency for D11 & D12 --------------
-  //  TCCR1B = TCCR1B & B11111000 | B00000101;    // set timer 1 divisor to  1024 for PWM frequency of    30.64 Hz
-  //  TCCR1B = TCCR1B & B11111000 | B00000100;    // set timer 1 divisor to   256 for PWM frequency of   122.55 Hz
+  //    TCCR1B = TCCR1B & B11111000 | B00000101;    // set timer 1 divisor to  1024 for PWM frequency of    30.64 Hz
+  //    TCCR1B = TCCR1B & B11111000 | B00000100;    // set timer 1 divisor to   256 for PWM frequency of   122.55 Hz
   TCCR1B = TCCR1B & B11111000 | B00000011;    // set timer 1 divisor to    64 for PWM frequency of   490.20 Hz
 
   //----------- Set PWM frequency for D2, D3 & D5 ------------
-  //  TCCR3B = TCCR3B & B11111000 | B00000101;    // set timer 3 divisor to  1024 for PWM frequency of    30.64 Hz
-  //  TCCR3B = TCCR3B & B11111000 | B00000100; // set timer 3 divisor to 256 for PWM frequency of 122.55 Hz
+  //    TCCR3B = TCCR3B & B11111000 | B00000101;    // set timer 3 divisor to  1024 for PWM frequency of    30.64 Hz
+  //    TCCR3B = TCCR3B & B11111000 | B00000100; // set timer 3 divisor to 256 for PWM frequency of 122.55 Hz
   TCCR3B = TCCR3B & B11111000 | B00000011;    // set timer 3 divisor to    64 for PWM frequency of   490.20 Hz
 
   //----------- Set PWM frequency for D6, D7 & D8 ------------
-  //  TCCR4B = TCCR4B & B11111000 | B00000101;    // set timer 4 divisor to  1024 for PWM frequency of    30.64 Hz
+  //    TCCR4B = TCCR4B & B11111000 | B00000101;    // set timer 4 divisor to  1024 for PWM frequency of    30.64 Hz
   TCCR4B = TCCR4B & B11111000 | B00000011;    // set timer 4 divisor to    64 for PWM frequency of   490.20 Hz
 
   //----------- Set PWM frequency for D9 & D10 ---------------
-  //  TCCR2B = TCCR2B & B11111000 | B00000111;    // set timer 2 divisor to  1024 for PWM frequency of    30.64 Hz
+  //    TCCR2B = TCCR2B & B11111000 | B00000111;    // set timer 2 divisor to  1024 for PWM frequency of    30.64 Hz
+  //    TCCR2B = TCCR2B & B11111000 | B00000110;    // set timer 2 divisor to   256 for PWM frequency of   122.55 Hz
   TCCR2B = TCCR2B & B11111000 | B00000100;    // set timer 2 divisor to    64 for PWM frequency of   490.20 Hz
 
   //  set adc prescaler to 16
@@ -180,14 +181,14 @@ void TaskRH(void *pvParameters)
 
     /*main task*/
     RightHip.FilterMovADC(580, 830, 45, -15);
-    RightHip.GoToAngle(angleRH, RightKnee.GetAngle(), 90, 200, 60, 40, true);
-    RightHip.Driver(RightHip.GetRotate(), true, RightHip.GetSpeed(), 35, 30);//30 25
+    RightHip.GoToAngle(angleRH, RightKnee.GetAngle(), 70, 250, 60, 40, true);
+    RightHip.Driver(RightHip.GetRotate(), true, RightHip.GetSpeed(), 50, 30);//30 25
 
     /*debug task*/
     dshow(1);
-    //    dprint(RightHip.GetTarget());
-    //    dprint(RightHip.GetAngle());
-    //    dprint(RightHip.GetSpeed());
+    //        dprint(RightHip.GetTarget());
+    //        dprint(RightHip.GetAngle());
+    //        dprint(RightHip.GetSpeed());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);
 
@@ -219,8 +220,8 @@ void TaskLH(void *pvParameters)
 
     /*main task*/
     LeftHip.FilterMovADC(630, 880, 45, -15);
-    LeftHip.GoToAngle(angleLH, LeftKnee.GetAngle(), 100, 150, 60, 35, true); // 150 100 60 35
-    LeftHip.Driver(LeftHip.GetRotate(), true, LeftHip.GetSpeed(), 35, 40);
+    LeftHip.GoToAngle(angleLH, LeftKnee.GetAngle(), 250, 60, 60, 30, true); // 150 100 60 35
+    LeftHip.Driver(LeftHip.GetRotate(), true, LeftHip.GetSpeed(), 50, 40);
 
     /*debug task*/
     dshow(2);
@@ -231,9 +232,9 @@ void TaskLH(void *pvParameters)
 
     /*visualize gait*/
 #if DEBUG == 2 || DEBUG == 5
-    visualize(1*bias + LeftHip.GetTarget());
-    visualize(1*bias + LeftHip.GetAngle());
-    visualize(1*bias);
+    visualize(1 * bias + LeftHip.GetTarget());
+    visualize(1 * bias + LeftHip.GetAngle());
+    visualize(1 * bias);
     newline;
 #endif
     /*delay*/
@@ -256,7 +257,7 @@ void TaskRK(void *pvParameters)
 
     /*main task*/
     RightKnee.FilterMovADC(320, 570, 45, -15);
-    RightKnee.GoToAngle(angleRK, 0, 42, 42, 40, 30, false);
+    RightKnee.GoToAngle(angleRK, 0, 42, 42, 50, 40, false);
     RightKnee.Driver(RightKnee.GetRotate(), false, RightKnee.GetSpeed(), 35, 35);
 
     /*debug task*/
@@ -267,9 +268,9 @@ void TaskRK(void *pvParameters)
 
     /*visualize gait*/
 #if DEBUG == 3 || DEBUG == 5
-    visualize(2*bias + RightKnee.GetTarget());
-    visualize(2*bias + RightKnee.GetAngle());
-    visualize(2*bias);
+    visualize(2 * bias + RightKnee.GetTarget());
+    visualize(2 * bias + RightKnee.GetAngle());
+    visualize(2 * bias);
     newline;
 #endif
     /*delay*/
@@ -292,7 +293,7 @@ void TaskLK(void *pvParameters)
 
     /*main task*/
     LeftKnee.FilterMovADC(290, 540, 45, -15);
-    LeftKnee.GoToAngle(angleLK, 0, 15, 15, 35, 30, false); //15, 15, 40, 35, // 40, 40, 50, 30,
+    LeftKnee.GoToAngle(angleLK, 0, 42, 42, 50, 35, false); //15, 15, 40, 35, // 40, 40, 50, 30,
     LeftKnee.Driver(LeftKnee.GetRotate(), false, LeftKnee.GetSpeed(), 35, 35);
 
     /*debug task*/
@@ -303,9 +304,9 @@ void TaskLK(void *pvParameters)
 
     /*visualize gait*/
 #if DEBUG == 4 || DEBUG == 5
-    visualize(3*bias + LeftKnee.GetTarget());
-    visualize(3*bias + LeftKnee.GetAngle());
-    visualize(3*bias);
+    visualize(3 * bias + LeftKnee.GetTarget());
+    visualize(3 * bias + LeftKnee.GetAngle());
+    visualize(3 * bias);
     newline;
 #endif
 #if DEBUG == 5
