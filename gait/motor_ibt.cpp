@@ -109,15 +109,17 @@ void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackw
   _PID_i = _PID_i + delta;
   _PID_d = delta - _prev_error;
   _prev_error = delta;
-  _PID_value = (delta * 0.8 + _PID_i * 0.06 + _PID_d * 0.8) * abs(sin((_angle / 180) * 3.14));
+//  _PID_value = (delta * 0.8 + _PID_i * 0.06 + _PID_d * 0.8) * abs(sin((_angle / 180) * 3.14));
 
   // Penambah berfungsi untuk memberikan tambahan pwm ketika terjadi
   if (isHip) {
+    _PID_value = (delta * 0.8 + _PID_i * 0.06 + _PID_d * 0.8) * abs(sin((_angle / 180) * 3.14));
     if ((_angle < 0) && _target < 0) //
       Penambah = cBackward * abs(sin((_angle / 180) * 3.14)) + (50 * abs(sin((addedTorque / 180) * 3.14))); // naik ke belakang
     else if ((_angle > 0) && _target > 0)
       Penambah = cForward * abs(sin((_angle / 180) * 3.14)) + (10 * abs(sin((addedTorque / 180) * 3.14))); //naik ke depan
   } else {
+    _PID_value = (delta * 1.5 + _PID_i * 2.2 + _PID_d * 2.1) * abs(sin((_angle / 180) * 3.14)); // 1.5,1.8,2.1
     Penambah = cForward * abs(sin((_angle / 180) * 3.14));
   }
 
@@ -128,22 +130,22 @@ void Motor_IBT::GoToAngle(int toAngle, int addedTorque, int cForward, int cBackw
 
   //  batasi speed dalam range :   bias2+penambah< pid < bias1+penambah
   if (abs(_PID_value) > (bias1 + Penambah)) {
-            dshow("1_");
+//    dshow("1_");
     _speed = bias1 + Penambah;
   }
   else if (abs(_PID_value) < (bias2 + Penambah) ) {
-            dshow("2_");
+//    dshow("2_");
     _speed = bias2 + Penambah;
   }
   else {
-            dshow("3_");
+//    dshow("3_");
     _speed = abs(_PID_value);
   }
   //      String buf = " posisi pid penambah speed " ;
   //      buf = buf + String(_angle) + " " + String(_PID_value) + " " + String(Penambah) + " " + _speed;
   //      Serial.println(buf);
   //      dshow(buf);
-    dprint(_angle);dprint(_target); dprint(_PID_value); dprint(Penambah);dprint(_speed);
+//      dprint(_angle);dprint(_target); dprint(_PID_value); dprint(Penambah);dprint(_speed);
 
   if (abs(delta) > _angleTolerance) { // di luar toleransi error
     _isRotate = CCW;

@@ -21,28 +21,31 @@
   IBT-2 pin 8 (GND) to Arduino GND
   IBT-2 pins 5 (R_IS) and 6 (L_IS) not connected
 */
+/*TASK DEBUG*/
+#define TASK 0
+/*ERROR GAIT*/
+#define ERR 1
 /*DEBUGGING PURPOSES*/
-#define DEBUG 5
-
+#define DEBUG 0
 #if DEBUG == 0
-#define dprint(expression) Serial.print("# "); Serial.print( #expression ); Serial.print( ": " ); Serial.println( expression )
-#define dshow(expression) Serial.println( expression )
-
-#define visualize(expression)
-#define bias(expression)
+  #define dprint(expression) Serial.print("# "); Serial.print( #expression ); Serial.print( ": " ); Serial.println( expression )
+  #define dshow(expression) Serial.println( expression )
+  
+  #define visualize(expression)
+  #define bias(expression)
 
 #else
-#define dprint(expression)
-#define dshow(expression)
-
-#define visualize(expression) Serial.print(expression);Serial.print(",")
-#if DEBUG == 5
-#define newline
-#define bias 75
-#else
-#define newline Serial.println()
-#define bias 0
-#endif
+  #define dprint(expression)
+  #define dshow(expression)
+  
+  #define visualize(expression) Serial.print(expression);Serial.print(",")
+  #if DEBUG == 5
+    #define newline
+    #define bias 75
+  #else
+    #define newline Serial.println()
+    #define bias 0
+  #endif
 #endif
 
 

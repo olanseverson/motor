@@ -53,12 +53,13 @@ void TaskGait( void *pvParameters );
 //};
 
 #define MaxPhase 20
+int shiftingPhase = 11;
 int angleGait[5][MaxPhase] = {
   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
   {33, 32, 29, 25, 19, 13, 7, 1, -2, -6, -8, -7, -2, 7, 16, 24, 28, 30, 33, 33},// LH{33, 32, 29, 25, 19, 13, 7, 1, -2, -6, -8, -7, -2, 7, 16, 24, 30, 33, 32, 31},// RH
-  {7, 13, 19, 18, 16, 13, 10, 7, 7, 9, 14, 22, 37, 53, 62, 62, 54, 38, 18, 4},// RK
+  { -7, -13, -19, -18, -16, -13, -10, -7, -7, -9, -14, -22, -37, -53, -62, -62, -54, -38, -18, -4}, // RK //{7, 13, 19, 18, 16, 13, 10, 7, 7, 9, 14, 22, 37, 53, 62, 62, 54, 38, 18, 4}
   {33, 32, 29, 25, 19, 13, 7, 1, -2, -6, -8, -7, -2, 7, 16, 24, 28, 30, 33, 33},// LH
-  {7, 13, 19, 18, 16, 13, 10, 7, 7, 9, 14, 22, 37, 53, 62, 62, 54, 38, 18, 4}// LK
+  { -7, -13, -19, -18, -16, -13, -10, -7, -7, -9, -14, -22, -37, -53, -62, -62, -54, -38, -18, -4} // LK
 };
 
 volatile unsigned int phaseNow = 0; // increment for angleGait
@@ -66,8 +67,15 @@ volatile unsigned int phaseNow = 0; // increment for angleGait
 double angleRH = 0; double angleRK = 0; double angleLH = 0; double angleLK = 0;
 
 int tDelay = 2; // delay for motor task (in tick)
-int gaitDelay = 140; // delay for next gait (in ms)
+int gaitDelay = 100; // delay for next gait (in ms)
 #define pinSwitch 5
+
+/*ERROR MEASUREMENT*/
+double RH_error = 0, RH_total = 0;
+double LH_error = 0, LH_total = 0;
+double RK_error = 0, RK_total = 0;
+double LK_error = 0, LK_total = 0;
+
 /********************************************VOID SETUP***********************************************/
 void setup() {
   // initialize serial communication at 115200 bits per second:
@@ -143,12 +151,11 @@ void TaskGait( void *pvParameters ) {
       angleLH = 0;
       angleLK = 0;
     } else {
-      int offset = 10;
-      float amp = -0.9;
-      angleRH = amp * (angleGait[1][(phaseNow + 11) % MaxPhase] - 20);
-      angleRK = amp * (angleGait[2][(phaseNow + 11) % MaxPhase] - 5);
-      angleLH = amp * (angleGait[3][(phaseNow) % MaxPhase] - 20);
-      angleLK = amp * (angleGait[4][(phaseNow) % MaxPhase] - 5);
+      float amp = 1;
+      angleRH = amp * (angleGait[1][(phaseNow + shiftingPhase) % MaxPhase]);
+      angleRK = amp * (angleGait[2][(phaseNow + shiftingPhase) % MaxPhase] + 7);
+      angleLH = amp * (angleGait[3][(phaseNow) % MaxPhase] );
+      angleLK = amp * (angleGait[4][(phaseNow) % MaxPhase] + 7 );
     }
 
     RightHip.ResetPID();
@@ -158,9 +165,27 @@ void TaskGait( void *pvParameters ) {
     phaseNow++;
 
     /*debug task*/
+#if TASK == 1
     dprint(0);
+#endif
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);
+
+    /*Error gait*/
+#if ERR == 1
+    if ((phaseNow + shiftingPhase) % MaxPhase == 0) {
+//      dprint(100.0 * RH_error / RH_total);
+//      dprint(100.0 * RK_error / RK_total);
+      RH_error = 0; RH_total = 0;
+      RK_error = 0; RK_total = 0;
+    }
+    if (phaseNow % MaxPhase == 0) {
+      dprint(100.0 * LH_error / LH_total);
+      dprint(100.0 * LK_error / LK_total);
+      LH_error = 0; LH_total = 0;
+      LK_error = 0; LK_total = 0;
+    }
+#endif
 
     /*delay*/
     //    vTaskDelay(tDelay);
@@ -181,16 +206,24 @@ void TaskRH(void *pvParameters)
 
     /*main task*/
     RightHip.FilterMovADC(580, 830, 45, -15);
-    RightHip.GoToAngle(angleRH, RightKnee.GetAngle(), 70, 250, 60, 40, true);
+    RightHip.GoToAngle(angleRH, RightKnee.GetAngle(), 70, 160, 60, 45, true);
     RightHip.Driver(RightHip.GetRotate(), true, RightHip.GetSpeed(), 50, 30);//30 25
 
     /*debug task*/
+#if TASK == 1
     dshow(1);
+#endif
     //        dprint(RightHip.GetTarget());
     //        dprint(RightHip.GetAngle());
     //        dprint(RightHip.GetSpeed());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);
+
+    /*Error gait*/
+#if ERR == 1
+    RH_total = RH_total + abs(RightHip.GetTarget());
+    RH_error = RH_error + abs(RightHip.GetAngle());
+#endif
 
     /*visualize gait*/
 #if DEBUG == 1 || DEBUG == 5
@@ -220,16 +253,23 @@ void TaskLH(void *pvParameters)
 
     /*main task*/
     LeftHip.FilterMovADC(630, 880, 45, -15);
-    LeftHip.GoToAngle(angleLH, LeftKnee.GetAngle(), 250, 60, 60, 30, true); // 150 100 60 35
-    LeftHip.Driver(LeftHip.GetRotate(), true, LeftHip.GetSpeed(), 50, 40);
+    LeftHip.GoToAngle(angleLH, LeftKnee.GetAngle(), 120, 70, 60, 45, true); // 150 100 60 35
+    LeftHip.Driver(LeftHip.GetRotate(), true, LeftHip.GetSpeed(), 45, 40);
 
     /*debug task*/
+#if TASK == 1
     dshow(2);
+#endif
     //    dprint(LeftHip.GetTarget());
     //    dprint(LeftHip.GetAngle());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);
 
+    /*Error gait*/
+#if ERR == 1
+    LH_total = LH_total + abs(LeftHip.GetTarget());
+    LH_error = LH_error + abs(LeftHip.GetAngle());
+#endif
     /*visualize gait*/
 #if DEBUG == 2 || DEBUG == 5
     visualize(1 * bias + LeftHip.GetTarget());
@@ -257,14 +297,22 @@ void TaskRK(void *pvParameters)
 
     /*main task*/
     RightKnee.FilterMovADC(320, 570, 45, -15);
-    RightKnee.GoToAngle(angleRK, 0, 42, 42, 50, 40, false);
+    RightKnee.GoToAngle(angleRK, 0, 60, 60, 60, 50, false);
     RightKnee.Driver(RightKnee.GetRotate(), false, RightKnee.GetSpeed(), 35, 35);
 
     /*debug task*/
+#if TASK == 1
     dshow(3);
+#endif
     //        dprint(RightKnee.GetTarget());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);
+
+    /*Error gait*/
+#if ERR == 1
+    RK_total = RK_total + abs(RightKnee.GetTarget());
+    RK_error = RK_error + abs(RightKnee.GetAngle());
+#endif
 
     /*visualize gait*/
 #if DEBUG == 3 || DEBUG == 5
@@ -293,14 +341,23 @@ void TaskLK(void *pvParameters)
 
     /*main task*/
     LeftKnee.FilterMovADC(290, 540, 45, -15);
-    LeftKnee.GoToAngle(angleLK, 0, 42, 42, 50, 35, false); //15, 15, 40, 35, // 40, 40, 50, 30,
+    LeftKnee.GoToAngle(angleLK, 0, 50, 50, 50, 35, false); //15, 15, 40, 35, // 40, 40, 50, 30,
     LeftKnee.Driver(LeftKnee.GetRotate(), false, LeftKnee.GetSpeed(), 35, 35);
 
     /*debug task*/
+#if TASK == 1
     dshow(4);
+#endif
     //        dprint(LeftKnee.GetTarget());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);Serial.println();
+
+    /*Error gait*/
+#if ERR == 1
+    LK_total = LK_total + abs(LeftKnee.GetTarget());
+    LK_error = LK_error + abs(LeftKnee.GetAngle());
+#endif
+
 
     /*visualize gait*/
 #if DEBUG == 4 || DEBUG == 5
