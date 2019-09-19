@@ -25,10 +25,10 @@
 #endif
 
 // constructor
-Motor_IBT RightHip(7, 8, A2, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
-Motor_IBT LeftHip(11, 12, A0, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
-Motor_IBT RightKnee(9, 10, A3, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
-Motor_IBT LeftKnee(2, 3, A1, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
+Motor_IBT RightHip(7, 8, A0, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
+Motor_IBT LeftHip(11, 12, A2, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
+Motor_IBT RightKnee(9, 10, A1, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
+Motor_IBT LeftKnee(2, 3, A3, Serial); // IBT_Motor(int Pin_RPWM, int Pin_LPWM, int SensorPin);
 
 void TaskRH( void *pvParameters );
 void TaskLH( void *pvParameters );
@@ -145,6 +145,7 @@ void TaskGait( void *pvParameters ) {
     /*main task*/
     //    phase = phase % 10;
     volatile int IsStop = digitalRead(pinSwitch);
+    //Serial.print(IsStop);
     if (IsStop == HIGH) {
       angleRH = 0;
       angleRK = 0;
@@ -157,13 +158,22 @@ void TaskGait( void *pvParameters ) {
       angleLH = amp * (angleGait[3][(phaseNow) % MaxPhase] );
       angleLK = amp * (angleGait[4][(phaseNow) % MaxPhase] + 7 );
     }
-
+    int jointAngle [8] = {};
+    jointAngle[1] = RightHip.GetTarget();
+    jointAngle[0] = RightHip.GetAngle();
+    jointAngle[3] = LeftHip.GetTarget();
+    jointAngle[2] = LeftHip.GetAngle();
+    jointAngle[5] = RightKnee.GetTarget();
+    jointAngle[4] = RightKnee.GetAngle();
+    jointAngle[7] = LeftKnee.GetTarget();
+    jointAngle[6] = LeftKnee.GetAngle();
+    sendToPC(jointAngle);
     RightHip.ResetPID();
     RightKnee.ResetPID();
     LeftHip.ResetPID();
     RightKnee.ResetPID();
     phaseNow++;
-
+               
     /*debug task*/
 #if TASK == 1
     dprint(0);
@@ -205,17 +215,17 @@ void TaskRH(void *pvParameters)
     digitalWrite(pin, value = !value);
 
     /*main task*/
-    RightHip.FilterMovADC(580, 830, 45, -15);
-    RightHip.GoToAngle(angleRH, RightKnee.GetAngle(), 70, 160, 60, 45, true);
+    RightHip.FilterMovADC(630, 880, 45, -15);//580, 830, 45, -15
+    RightHip.GoToAngle(angleRH, RightKnee.GetAngle(), 120, 70, 60, 45, true);//70, 160, 60, 45, true
     RightHip.Driver(RightHip.GetRotate(), true, RightHip.GetSpeed(), 50, 30);//30 25
 
     /*debug task*/
 #if TASK == 1
     dshow(1);
 #endif
-    //        dprint(RightHip.GetTarget());
-    //        dprint(RightHip.GetAngle());
-    //        dprint(RightHip.GetSpeed());
+//            dprint(RightHip.GetTarget());
+//            dprint(RightHip.GetAngle());
+//            dprint(RightHip.GetSpeed());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);
 
@@ -252,16 +262,16 @@ void TaskLH(void *pvParameters)
     digitalWrite(pin, value = !value);
 
     /*main task*/
-    LeftHip.FilterMovADC(630, 880, 45, -15);
-    LeftHip.GoToAngle(angleLH, LeftKnee.GetAngle(), 120, 70, 60, 45, true); // 150 100 60 35
+    LeftHip.FilterMovADC(580, 830, 45, -15);//630, 880, 45, -15
+    LeftHip.GoToAngle(angleLH, LeftKnee.GetAngle(), 70, 160, 60, 45, true); // 150 100 60 35 120, 70, 60, 45, true
     LeftHip.Driver(LeftHip.GetRotate(), true, LeftHip.GetSpeed(), 45, 40);
 
     /*debug task*/
 #if TASK == 1
     dshow(2);
 #endif
-    //    dprint(LeftHip.GetTarget());
-    //    dprint(LeftHip.GetAngle());
+//        dprint(LeftHip.GetTarget());
+//        dprint(LeftHip.GetAngle());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);
 
@@ -296,15 +306,16 @@ void TaskRK(void *pvParameters)
     digitalWrite(pin, value = !value);
 
     /*main task*/
-    RightKnee.FilterMovADC(320, 570, 45, -15);
-    RightKnee.GoToAngle(angleRK, 0, 60, 60, 60, 50, false);
+    RightKnee.FilterMovADC(290, 540, 45, -15);//320, 570, 45, -15
+    RightKnee.GoToAngle(angleRK, 0, 50, 50, 50, 35, false);//50, 50, 50, 35,
     RightKnee.Driver(RightKnee.GetRotate(), false, RightKnee.GetSpeed(), 35, 35);
 
     /*debug task*/
 #if TASK == 1
     dshow(3);
 #endif
-    //        dprint(RightKnee.GetTarget());
+//        dprint(RightKnee.GetTarget());
+//        dprint(RightKnee.GetAngle());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);
 
@@ -340,15 +351,16 @@ void TaskLK(void *pvParameters)
     digitalWrite(pin, value = !value);
 
     /*main task*/
-    LeftKnee.FilterMovADC(290, 540, 45, -15);
-    LeftKnee.GoToAngle(angleLK, 0, 50, 50, 50, 35, false); //15, 15, 40, 35, // 40, 40, 50, 30,
+    LeftKnee.FilterMovADC(320, 570, 45, -15);//290, 540, 45, -15
+    LeftKnee.GoToAngle(angleLK, 0,  60, 60, 60, 50, false); // 60, 60, 60, 50,
     LeftKnee.Driver(LeftKnee.GetRotate(), false, LeftKnee.GetSpeed(), 35, 35);
 
     /*debug task*/
 #if TASK == 1
     dshow(4);
 #endif
-    //        dprint(LeftKnee.GetTarget());
+//            dprint(LeftKnee.GetTarget());
+//            dprint(LeftKnee.GetAngle());
     //    uxHighWaterMark = uxTaskGetStackHighWaterMark( NULL );
     //    dprint(uxHighWaterMark);Serial.println();
 
@@ -373,4 +385,14 @@ void TaskLK(void *pvParameters)
     //    vTaskDelay(tDelay);
     vTaskDelayUntil( &xLastWakeTime, tDelay);
   }
+}
+
+void sendToPC(int jointAngle[8])
+{
+  for (int i = 0; i<8; i++) {
+    Serial.print(jointAngle[i]);
+    Serial.print(",");
+  }
+  Serial.println();
+
 }

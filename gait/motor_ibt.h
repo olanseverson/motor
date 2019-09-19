@@ -24,9 +24,9 @@
 /*TASK DEBUG*/
 #define TASK 0
 /*ERROR GAIT*/
-#define ERR 1
+#define ERR 0
 /*DEBUGGING PURPOSES*/
-#define DEBUG 0
+#define DEBUG 5
 #if DEBUG == 0
   #define dprint(expression) Serial.print("# "); Serial.print( #expression ); Serial.print( ": " ); Serial.println( expression )
   #define dshow(expression) Serial.println( expression )
@@ -41,7 +41,7 @@
   #define visualize(expression) Serial.print(expression);Serial.print(",")
   #if DEBUG == 5
     #define newline
-    #define bias 75
+    #define bias 100
   #else
     #define newline Serial.println()
     #define bias 0
